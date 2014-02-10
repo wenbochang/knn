@@ -8,20 +8,18 @@ NodeList.prototype.add = function(node) {
 }
 
 NodeList.prototype.calculateRanges = function() {
-  var areas = []; 
-  var rooms = []; 
+  for (var i in this.nodes) {
+    var node = this.nodes[i];
 
-  this.nodes.forEach( function(node) {
-    areas.push(node.area);
-    rooms.push(node.rooms);
-  });
+    for (var feature in node) {
+      this[feature] = (this[feature] || {min: 1000000, max: 0});
 
-  areas.sort( function(a,b) { return a - b} );
-  rooms.sort( function(a,b) { return a - b} );
+      if (node[feature] < this[feature].min) this[feature].min = node[feature];
+      if (node[feature] > this[feature].max) this[feature].max = node[feature];
+    }
+  }
 
-  this.areas = {min: areas[0], max: areas[areas.length-1]};
-  this.rooms = {min: rooms[0], max: rooms[rooms.length-1]};
-
+  this.areas = this.area;
 //  this.areas = {min: 1000000, max: 0};
 //  this.rooms = {min: 1000000, max: 0};
 //  for (var i in this.nodes)
@@ -46,7 +44,6 @@ NodeList.prototype.calculateRanges = function() {
 //      this.areas.max = this.nodes[i].area;
 //    }
 //  }
-
 }
 
 NodeList.prototype.determineUnknown = function() {
