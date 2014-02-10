@@ -1,27 +1,26 @@
 var Node = function(object) {
+  this.features = {};
   for (var key in object) {
-    this[key] = object[key];
+    this.features[key] = object[key];
   }
 }
 
-Node.prototype.measureDistances = function(area_obj, room_obj) {
-  var area_range = area_obj.max - area_obj.min;
-  var rooms_range = room_obj.max - room_obj.min;
 
-  //loop through neighbors and calc area/room diff
+Node.prototype.measureDistances = function(features) {
   for (var i in this.neighbors) {
     var neighbor = this.neighbors[i];
+    var total_diff = 0;
 
-    var area_diff = neighbor.area - this.area;
-    area_diff /= area_range;
+    for (var feature in features) {
+      var feature_range = features[feature].max - features[feature].min;
+      var feature_diff = neighbor.features[feature] - this.features[feature];
+      feature_diff /= feature_range;
+      total_diff += (feature_diff * feature_diff);
+    }
 
-    var rooms_diff = neighbor.rooms - this.rooms;
-    rooms_diff /= rooms_range;
-
-    neighbor.distance = Math.sqrt(area_diff*area_diff + rooms_diff*rooms_diff);
+    neighbor.distance = Math.sqrt(total_diff);
   }
-
-};
+}
 
 Node.prototype.sortByDistance = function() {
   this.neighbors.sort( function(a, b) {
@@ -33,10 +32,10 @@ Node.prototype.guessType = function(k) {
   var types = {};
 
   //loop through neighbors and increment neighbor type in hash
-  for (var i in this.neighbors.slice(0, 2)) {
+  for (var i in this.neighbors.slice(0, k)) {
     var neighbor = this.neighbors[i];
-    if (!types[neighbor.type]) types[neighbor.type] = 0;
-    types[neighbor.type] += 1;
+    if (!types[neighbor.features.type]) types[neighbor.features.type] = 0;
+    types[neighbor.features.type] += 1;
   }
 
   //loop through types hash and get highest count

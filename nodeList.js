@@ -1,49 +1,32 @@
 var NodeList = function(k) {
   this.nodes = [];
   this.k = k;
+  this.features = {};
 }
 
 NodeList.prototype.add = function(node) {
   this.nodes.push(node);
 }
 
+//calculate min/max for each feature
 NodeList.prototype.calculateRanges = function() {
   for (var i in this.nodes) {
     var node = this.nodes[i];
 
-    for (var feature in node) {
-      this[feature] = (this[feature] || {min: 1000000, max: 0});
+    for (var feature in node.features) {
+      if (feature === "type") continue;
 
-      if (node[feature] < this[feature].min) this[feature].min = node[feature];
-      if (node[feature] > this[feature].max) this[feature].max = node[feature];
+      this.features[feature] = (this.features[feature] || {min: 1000000, max: 0});
+      if (node.features[feature] < this.features[feature].min) 
+        this.features[feature].min = node.features[feature];
+      if (node.features[feature] > this.features[feature].max) 
+        this.features[feature].max = node.features[feature];
     }
   }
 
-  this.areas = this.area;
-//  this.areas = {min: 1000000, max: 0};
-//  this.rooms = {min: 1000000, max: 0};
-//  for (var i in this.nodes)
-//  {
-//    if (this.nodes[i].rooms < this.rooms.min)
-//    {
-//      this.rooms.min = this.nodes[i].rooms;
-//    }
-//
-//    if (this.nodes[i].rooms > this.rooms.max)
-//    {
-//      this.rooms.max = this.nodes[i].rooms;
-//    }
-//
-//    if (this.nodes[i].area < this.areas.min)
-//    {
-//      this.areas.min = this.nodes[i].area;
-//    }
-//
-//    if (this.nodes[i].area > this.areas.max)
-//    {
-//      this.areas.max = this.nodes[i].area;
-//    }
-//  }
+  this.areas = this.features.area;
+  this.rooms = this.features.rooms;
+
 }
 
 NodeList.prototype.determineUnknown = function() {
@@ -51,17 +34,17 @@ NodeList.prototype.determineUnknown = function() {
 
   //loop through all nodes and look for unknown
   for (var i in this.nodes) {
-    if (!this.nodes[i].type) {
+    if (!this.nodes[i].features.type) {
 
       //clone neighbors
       this.nodes[i].neighbors = [];
       for (var j in this.nodes) {
-        if (!this.nodes[j].type) continue;
-        this.nodes[i].neighbors.push( new Node(this.nodes[j]) );
+        if (!this.nodes[j].features.type) continue;
+        this.nodes[i].neighbors.push( new Node(this.nodes[j].features) );
       }
 
       //measure distances
-      this.nodes[i].measureDistances(this.areas, this.rooms);
+      this.nodes[i].measureDistances(this.features);
       
       //sort by distance
       this.nodes[i].sortByDistance();
@@ -86,7 +69,7 @@ NodeList.prototype.draw = function(canvas_id) {
   {
     ctx.save();
 
-    switch (this.nodes[i].type)
+    switch (this.nodes[i].features.type)
     {
       case 'apartment':
         ctx.fillStyle = 'red';
@@ -105,8 +88,8 @@ NodeList.prototype.draw = function(canvas_id) {
     var x_shift_pct = (width  - padding) / width;
     var y_shift_pct = (height - padding) / height;
 
-    var x = (this.nodes[i].rooms - this.rooms.min) * (width  / rooms_range) * x_shift_pct + (padding / 2);
-    var y = (this.nodes[i].area  - this.areas.min) * (height / areas_range) * y_shift_pct + (padding / 2);
+    var x = (this.nodes[i].features.rooms - this.rooms.min) * (width  / rooms_range) * x_shift_pct + (padding / 2);
+    var y = (this.nodes[i].features.area  - this.areas.min) * (height / areas_range) * y_shift_pct + (padding / 2);
     y = Math.abs(y - height);
 
 
@@ -121,7 +104,7 @@ NodeList.prototype.draw = function(canvas_id) {
      * Is this an unknown node? If so, draw the radius of influence
      */
 
-    if ( ! this.nodes[i].type )
+    if ( ! this.nodes[i].features.type )
     {
       switch (this.nodes[i].guess.type)
       {
