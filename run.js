@@ -46,7 +46,7 @@ var run = function() {
 };
 
 window.onload = function() {
-  //setInterval(run, 5000);
+  setInterval(run, 5000);
   run();
 }
 
